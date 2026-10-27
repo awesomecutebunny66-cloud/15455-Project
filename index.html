@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Project outline for a complexity theory learning website about quantum computation, Simon's algorithm, and exponential query speedups." />
+  <meta name="theme-color" content="#090f20" />
+  <title>Simon's Algorithm · Quantum Computation and Exponential Speedups</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090f20;
+      --panel: #121c31;
+      --panel-2: #0e172a;
+      --line: rgba(176, 197, 241, .15);
+      --ink: #eef3ff;
+      --muted: #a1aec9;
+      --cyan: #78e5df;
+      --violet: #b5a4ff;
+      --amber: #ffc88b;
+      --max: 1100px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+    body::before { content: ""; position: absolute; inset: 0 0 auto; height: 770px; pointer-events: none;
+      background: radial-gradient(ellipse 43% 48% at 79% 26%,rgba(111, 78, 216, .17),transparent 70%),radial-gradient(ellipse 42% 45% at 18% 10%,rgba(24, 176, 173, .11),transparent 70%);
+      z-index: -1;
+    }
+    a { color: inherit; }
+    a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; border-radius: 3px; }
+    .container { max-width: var(--max); margin: auto; padding: 0 28px; }
+    .topbar { border-bottom: 1px solid var(--line); background: rgba(9,15,32,.84); backdrop-filter: blur(14px); position: sticky; top: 0; z-index: 10; }
+    .topbar-inner { min-height: 74px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 750; letter-spacing: -.03em; }
+    .logo { display: grid; place-items: center; width: 37px; height: 37px; color: #09121d; background: linear-gradient(145deg,var(--cyan),var(--violet)); border-radius: 11px; font-weight: 850; font-family: Georgia,serif; font-size: 21px; }
+    nav { display: flex; gap: 26px; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 600; }
+    nav a:hover { color: var(--ink); }
+    main { overflow: hidden; }
+    .hero { padding: 100px 0 90px; border-bottom: 1px solid var(--line); }
+    .hero-grid { display: grid; grid-template-columns: 1.17fr .83fr; align-items: center; gap: 70px; }
+    .eyebrow { display: inline-flex; gap: 10px; align-items: center; color: var(--cyan); font-size: 12px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--cyan); }
+    h1 { font-size: clamp(44px, 5.6vw, 77px); line-height: 1.08; letter-spacing: -.055em; margin: 27px 0 24px; font-weight: 800; }
+    h1 .accent { color: var(--cyan); }
+    .lede { color: #bec9df; font-size: 19px; max-width: 620px; line-height: 1.75; margin: 0 0 30px; }
+    .pills { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pill { padding: 7px 13px; border: 1px solid var(--line); border-radius: 100px; color: var(--muted); background: rgba(255,255,255,.025); font-size: 12px; letter-spacing: .04em; font-weight: 600; }
+    .viz { border: 1px solid rgba(144, 182, 242, .22); background: linear-gradient(145deg,rgba(25,43,68,.86),rgba(12,19,38,.92)); border-radius: 24px; padding: 26px; box-shadow: 0 22px 80px rgba(0,0,0,.22); position: relative; overflow: hidden; }
+    .viz::after { content: ""; width: 140px; height: 140px; position: absolute; top: -80px; right: -50px; border-radius: 50%; background: var(--violet); filter: blur(110px); opacity: .5; pointer-events:none; }
+    .viz-label { color: var(--muted); font-size: 11px; letter-spacing: .16em; font-weight: 800; text-transform: uppercase; }
+    .viz h2 { font-size: 20px; line-height: 1.35; letter-spacing: -.03em; margin: 12px 0 24px; }
+    .circuit { border: 1px solid var(--line); padding: 24px 10px; background: rgba(5,12,26,.65); border-radius: 14px; }
+    .wire { display: grid; grid-template-columns: 42px 1fr 1fr 1fr 34px; gap: 7px; align-items: center; margin: 8px 0 23px; position: relative; }
+    .wire:last-child { margin-bottom: 8px; }
+    .wire::before { content: ""; position: absolute; left: 50px; right: 16px; top: 50%; height: 1px; background: rgba(124,218,221,.45); }
+    .ket { text-align: center; font-size: 14px; font-family: Georgia,serif; z-index: 1; color: #dce5f7; }
+    .gate { min-height: 31px; min-width: 32px; justify-self: center; padding: 0 8px; display: grid; place-items: center; border: 1px solid var(--cyan); background: #172e41; color: var(--cyan); z-index: 1; font-size: 13px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; border-radius: 5px; }
+    .gate.violet { color: var(--violet); border-color: var(--violet); background: #28213c; }
+    .gate.empty { border: 0; background: transparent; }
+    .measure { background: #263346; color: #fff; border: 1px solid #91a4c4; }
+    .viz-note { color: #9eacc6; font-size: 12px; line-height: 1.55; margin-top: 17px; }
+    .theorem-strip { padding: 30px 0; border-bottom: 1px solid var(--line); }
+    .theorem-inner { display: flex; align-items: center; gap: 35px; justify-content: space-between; flex-wrap: wrap; }
+    .theorem-copy { max-width: 575px; }
+    .mini-heading { color: var(--amber); text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 800; }
+    .theorem-copy p { color: #bbc7df; margin: 8px 0 0; }
+    .comparison { display: flex; align-items: stretch; gap: 9px; }
+    .metric { padding: 12px 20px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.022); min-width: 130px; }
+    .metric span { display: block; color: var(--muted); text-transform: uppercase; font-size: 10px; letter-spacing: .12em; font-weight: 800; }
+    .metric strong { display: block; font-size: 24px; line-height: 1.5; letter-spacing: -.05em; font-family: Georgia,serif; font-weight: 500; color: var(--cyan); }
+    .metric.classical strong { color: var(--amber); }
+    section { scroll-margin-top: 115px; }
+    .outline-section { padding: 95px 0 88px; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 35px; }
+    .section-head h2, .references h2 { letter-spacing: -.045em; font-size: clamp(31px,3.4vw,43px); margin: 9px 0 0; line-height: 1.18; }
+    .section-head p { margin: 0; color: var(--muted); max-width: 390px; font-size: 14px; }
+    .outline-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .outline-card { border: 1px solid var(--line); background: linear-gradient(145deg,rgba(25,35,55,.76),rgba(15,24,44,.9)); border-radius: 17px; padding: 27px 28px 25px; transition: border-color .2s, transform .2s; }
+    .outline-card:hover { border-color: rgba(120,229,223,.42); transform: translateY(-2px); }
+    .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .number { color: var(--cyan); font: 600 14px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .tag { color: #9ca9c5; border: 1px solid var(--line); border-radius: 20px; font-size: 10px; letter-spacing: .11em; text-transform: uppercase; padding: 4px 9px; font-weight: 700; }
+    .outline-card h3 { letter-spacing: -.025em; font-size: 22px; line-height: 1.3; margin: 0 0 11px; }
+    .outline-card p { color: #acbad3; line-height: 1.75; margin: 0; font-size: 14px; }
+    .future { background: rgba(119,229,223,.035); border: 1px dashed rgba(119,229,223,.28); border-radius: 17px; margin-top: 16px; padding: 20px 26px; color: #acbad3; }
+    .future b { color: var(--ink); }
+    .references { border-top: 1px solid var(--line); padding: 75px 0 95px; }
+    .refs-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; margin-top: 32px; }
+    .ref { border: 1px solid var(--line); padding: 22px 24px; border-radius: 13px; background: rgba(255,255,255,.022); text-decoration: none; display: block; }
+    .ref:hover { border-color: rgba(120,229,223,.4); }
+    .ref small { display: block; color: var(--cyan); letter-spacing: .13em; text-transform: uppercase; font-size: 10px; font-weight: 800; margin-bottom: 8px; }
+    .ref strong { display: block; font-size: 16px; }
+    .ref span { display: block; color: var(--muted); margin-top: 5px; font-size: 12px; }
+    footer { border-top: 1px solid var(--line); padding: 25px 0 40px; color: var(--muted); font-size: 12px; }
+    footer .container { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+    @media (max-width: 850px) { .hero-grid { grid-template-columns: 1fr; gap: 42px; } .hero { padding: 75px 0; } .viz { max-width: 560px; } .section-head { display:block; } .section-head p { margin-top: 18px; } }
+    @media (max-width: 590px) { .container { padding: 0 20px; } .topbar-inner { min-height: 65px; } .brand { font-size: 14px; } nav { gap: 13px; } nav a { font-size: 12px; } .hero { padding: 58px 0; } .hero h1 { margin-top: 20px; } .lede { font-size: 17px; } .outline-section { padding: 65px 0; } .outline-grid, .refs-grid { grid-template-columns: 1fr; } .theorem-inner { gap: 24px; } .metric { min-width: 0; padding: 10px 14px; } .metric strong { font-size: 19px; } .outline-card { padding: 24px; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .outline-card { transition: none; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="#top" class="brand"><span class="logo" aria-hidden="true">ψ</span> Quantum Computation</a>
+      <nav aria-label="Main navigation">
+        <a href="#outline">Outline</a>
+        <a href="#theorem">Key theorem</a>
+        <a href="#references">Sources</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow">15-455 · Fall 2026 · Project proposal</div>
+          <h1>Simon's algorithm <span class="accent">&amp; quantum speedups.</span></h1>
+          <p class="lede">A learning website about how quantum computation can outperform randomized classical algorithms, centered on Simon's algorithm and its exponential query separation.</p>
+          <div class="pills">
+            <span class="pill">Quantum computing</span>
+            <span class="pill">Query complexity</span>
+            <span class="pill">Algorithm + proof</span>
+          </div>
+        </div>
+        <aside class="viz" aria-label="Simplified schematic of Simon's quantum circuit">
+          <div class="viz-label">Planned technical centerpiece</div>
+          <h2>From a quantum circuit to a classical lower bound</h2>
+          <div class="circuit">
+            <div class="wire"><span class="ket">|0⟩</span><span class="gate">H</span><span class="gate violet">U<sub>f</sub></span><span class="gate">H</span><span class="gate measure">M</span></div>
+            <div class="wire"><span class="ket">|0⟩</span><span class="gate empty"></span><span class="gate violet">U<sub>f</sub></span><span class="gate empty"></span><span class="gate empty"></span></div>
+          </div>
+          <div class="viz-note">Schematic only: the full site will unpack the register sizes, oracle, measurements, and post-processing.</div>
+        </aside>
+      </div>
+    </div>
+
+    <section class="theorem-strip" id="theorem" aria-label="Project theorem">
+      <div class="container theorem-inner">
+        <div class="theorem-copy">
+          <div class="mini-heading">Central result to develop</div>
+          <p>The website will establish an exponential separation in oracle query complexity for Simon's promise problem, including a correctness argument and a randomized classical lower bound.</p>
+        </div>
+        <div class="comparison" aria-label="Quantum versus classical query complexity">
+          <div class="metric"><span>Quantum</span><strong>O(n)</strong></div>
+          <div class="metric classical"><span>Classical randomized</span><strong>Ω(2<sup>n/2</sup>)</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="outline" class="outline-section">
+      <div class="container">
+        <div class="section-head">
+          <div><div class="eyebrow">Course project roadmap</div><h2>Proposed website outline</h2></div>
+          <p>The sections below are the planned order of the finished educational site. This page is currently a project outline, not the completed lessons.</p>
+        </div>
+        <div class="outline-grid">
+          <article class="outline-card"><div class="card-top"><span class="number">01 / 08</span><span class="tag">Motivation</span></div><h3>Why quantum computation?</h3><p>Introduce the goal of comparing classical and quantum computation. Motivate query complexity as a setting where we can rigorously study computational speedups.</p></article>
+          <article class="outline-card"><div class="card-top"><span class="number">02 / 08</span><span class="tag">Foundations</span></div><h3>Quantum computing essentials</h3><p>Develop the minimum background needed for the algorithm: qubits, superposition, measurement, tensor products, and basic gates. Emphasize the Hadamard transform and interference.</p></article>
+          <article class="outline-card"><div class="card-top"><span class="number">03 / 08</span><span class="tag">Framework</span></div><h3>Circuits, oracles, and query complexity</h3><p>Define how quantum circuits and oracle calls are represented. Explain what is counted by a query and why classical and quantum algorithms can be compared in this model.</p></article>
+          <article class="outline-card"><div class="card-top"><span class="number">04 / 08</span><span class="tag">The problem</span></div><h3>Simon's promise problem</h3><p>State the hidden-string problem and its promise precisely, then work through a small example. Introduce a natural classical collision-finding strategy as a baseline.</p></article>
+          <article class="outline-card"><div class="card-top"><span class="number">05 / 08</span><span class="tag">Algorithm</span></div><h3>Simon's quantum algorithm</h3><p>Walk through each stage of the quantum circuit, including the oracle and measurement steps. Show how repeated runs yield equations that can be solved using linear algebra over GF(2).</p></article>
+          <article class="outline-card"><div class="card-top"><span class="number">06 / 08</span><span class="tag">Proof I</span></div><h3>Correctness and quantum query bound</h3><p>Prove why measured strings satisfy the required orthogonality relation with the hidden string. Analyze how many repetitions are sufficient to recover the hidden string with high probability.</p></article>
+          <article class="outline-card"><div class="card-top"><span class="number">07 / 08</span><span class="tag">Proof II</span></div><h3>The randomized classical lower bound</h3><p>Develop the birthday-paradox intuition and a formal lower-bound argument for classical randomized queries. Combine this with the quantum upper bound to establish the exponential separation.</p></article>
+          <article class="outline-card"><div class="card-top"><span class="number">08 / 08</span><span class="tag">Perspective</span></div><h3>What the separation does—and does not—show</h3><p>Compare the two query bounds and discuss the role of the oracle model. Briefly connect Simon's algorithm to later quantum algorithms and the broader study of computational complexity.</p></article>
+        </div>
+        <div class="future"><b>Possible additions:</b> an interactive small-input simulation, a step-by-step circuit visualization, and a short optional section connecting the math to physical ideas about quantum systems.</div>
+      </div>
+    </section>
+
+    <section class="references" id="references">
+      <div class="container">
+        <div class="eyebrow">Starting bibliography</div>
+        <h2>References to build from</h2>
+        <div class="refs-grid">
+          <a class="ref" target="_blank" rel="noopener noreferrer" href="https://ocw.mit.edu/courses/6-845-quantum-complexity-theory-fall-2010/pages/lecture-notes/"><small>MIT OpenCourseWare</small><strong>Quantum Complexity Theory · Lecture Notes</strong><span>Quantum fundamentals, circuits, and Simon's algorithm (Lectures 1–6)</span></a>
+          <a class="ref" target="_blank" rel="noopener noreferrer" href="https://quantum.cloud.ibm.com/learning/en/courses/fundamentals-of-quantum-algorithms/quantum-query-algorithms/simon-algorithm"><small>IBM Quantum Learning</small><strong>Simon's Algorithm</strong><span>Problem definition, quantum circuit, and analysis</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer><div class="container"><span>15-455 Complexity Theory · Project progress</span><span>Outline stage · Fall 2026</span></div></footer>
+</body>
+</html>
